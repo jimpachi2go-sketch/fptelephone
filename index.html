@@ -1,0 +1,407 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FP受付 Q&Aシステム</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:"Meiryo","Yu Gothic",sans-serif;
+  background:#edf2f5;
+  color:#263746;
+}
+header{
+  background:linear-gradient(135deg,#123b59,#247c91);
+  color:white;
+  padding:25px 15px;
+  text-align:center;
+}
+header h1{margin:0;font-size:25px}
+header p{margin:10px 0 0;font-size:14px}
+main{
+  max-width:950px;
+  margin:25px auto;
+  padding:0 15px;
+}
+.panel{
+  background:white;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 3px 12px #00000010;
+}
+.search{
+  width:100%;
+  padding:15px;
+  font-size:17px;
+  border:1px solid #bdcbd3;
+  border-radius:8px;
+}
+.categories{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:15px;
+}
+button{
+  cursor:pointer;
+  border:0;
+  border-radius:7px;
+  padding:11px 15px;
+  font-size:14px;
+}
+.category{
+  background:#e5eef3;
+  color:#24475d;
+}
+.category.active{
+  background:#176b83;
+  color:white;
+}
+.question{
+  width:100%;
+  text-align:left;
+  background:#f5f8fa;
+  color:#24475d;
+  padding:17px;
+  margin:6px 0;
+  border:1px solid #e0e8ec;
+  font-size:16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.question:hover{background:#e8f2f5}
+.question span:last-child{color:#39869a}
+.answer{
+  display:none;
+  background:#f0f8fa;
+  border-left:5px solid #23849a;
+  padding:20px;
+  margin:0 0 12px;
+  border-radius:5px;
+  line-height:1.9;
+}
+.answer.show{display:block}
+.answer h3{margin-top:0;color:#176b83}
+.answer-text{white-space:pre-wrap}
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:15px;
+}
+.speak{background:#176b83;color:white}
+.stop{background:#a64b4b;color:white}
+.copy{background:#526d7b;color:white}
+#resultCount{color:#617783;font-size:13px}
+footer{
+  text-align:center;
+  padding:25px;
+  color:#72818b;
+  font-size:12px;
+}
+.notice{
+  background:#fff8e7;
+  border-left:4px solid #d5a33c;
+  padding:13px;
+  font-size:13px;
+  line-height:1.7;
+}
+@media(max-width:600px){
+  header h1{font-size:21px}
+  .panel{padding:15px}
+  .question{font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ファイナンシャルプランナー</h1>
+  <div style="font-size:21px;margin-top:8px">受付 Q&A案内システム</div>
+  <p>お客様のご質問に、わかりやすく丁寧にお答えします。</p>
+</header>
+
+<main>
+
+<div class="panel">
+  <h2>質問を検索する</h2>
+  <input id="search" class="search"
+    type="search"
+    placeholder="質問やキーワードを入力してください"
+    oninput="render()">
+
+  <div class="categories" id="categories"></div>
+  <p id="resultCount"></p>
+</div>
+
+<div class="panel">
+  <h2>質問一覧</h2>
+  <div id="questions"></div>
+</div>
+
+<div class="panel">
+  <h2>受付係員からのご案内</h2>
+  <div class="notice">
+    専門的な判断や個別の金融商品の説明については、
+    必ずファイナンシャルプランナー担当者に引き継いでください。
+    受付係員が独断で契約や投資を勧めないようにしてください。
+  </div>
+</div>
+
+</main>
+
+<footer>
+  FP受付 Q&Aシステム | HTML単独動作版
+</footer>
+
+<script>
+const data = [
+{
+c:"FPの基本",
+q:"ファイナンシャルプランナーとは何ですか？",
+a:"ファイナンシャルプランナーは、お客様の生活設計や将来のお金について一緒に考える専門家です。保険、年金、住宅ローン、教育資金、老後資金、資産形成などについてご相談いただけます。"
+},
+{
+c:"FPの基本",
+q:"どのような相談ができますか？",
+a:"家計の見直し、保険、住宅購入、住宅ローン、教育資金、老後の生活資金、年金、貯蓄、資産形成、相続など、幅広いお金のご相談を承ります。"
+},
+{
+c:"FPの基本",
+q:"初めてでも相談できますか？",
+a:"もちろんです。初めてのお客様にもわかりやすくご説明いたします。専門知識がなくても問題ございません。"
+},
+{
+c:"予約・受付",
+q:"相談には予約が必要ですか？",
+a:"事前のご予約をおすすめしております。担当者の予定を確認し、ご希望の日時をご案内いたします。"
+},
+{
+c:"予約・受付",
+q:"相談時間はどのくらいですか？",
+a:"ご相談内容によって異なりますが、一般的には30分から60分程度が目安です。詳しくは担当者にご確認ください。"
+},
+{
+c:"予約・受付",
+q:"家族と一緒に相談できますか？",
+a:"はい、ご家族と一緒にご相談いただけます。ご夫婦や親子でのご相談も歓迎しております。"
+},
+{
+c:"予約・受付",
+q:"相談するときに必要な書類はありますか？",
+a:"相談内容によって異なります。保険の見直しでは保険証券、住宅ローンでは返済予定表、家計の相談では収支がわかる資料などがあると便利です。"
+},
+{
+c:"料金",
+q:"相談料金はいくらですか？",
+a:"相談料金はサービス内容によって異なります。料金表をご確認いただくか、担当者から詳しくご説明いたします。"
+},
+{
+c:"料金",
+q:"無料相談はありますか？",
+a:"無料相談の有無や対象となる内容については、当事務所のサービス内容をご案内いたします。"
+},
+{
+c:"料金",
+q:"相談したら契約しなければなりませんか？",
+a:"いいえ、相談したからといって契約する必要はございません。ご説明をお聞きいただいたうえで、ご自身でご判断いただけます。"
+},
+{
+c:"保険",
+q:"保険の見直しはできますか？",
+a:"はい。現在加入されている保険の保障内容や保険料などを確認し、担当者が見直しのポイントをご説明いたします。"
+},
+{
+c:"保険",
+q:"生命保険について相談できますか？",
+a:"はい。生命保険の保障内容や必要保障額、保険料などについてご相談いただけます。"
+},
+{
+c:"年金・老後",
+q:"年金について相談できますか？",
+a:"はい。公的年金の仕組みや老後の生活資金についてご相談いただけます。個別の年金額については担当者にご確認ください。"
+},
+{
+c:"年金・老後",
+q:"老後の生活資金が心配です。",
+a:"老後に必要となる生活費や年金収入、貯蓄などを整理し、将来の資金計画について担当者がご説明いたします。"
+},
+{
+c:"投資・資産形成",
+q:"投資の知識がなくても相談できますか？",
+a:"はい、大丈夫です。投資の基本的な仕組みからご説明いたします。投資には元本割れなどのリスクがありますので、リスクについても確認しながらご案内いたします。"
+},
+{
+c:"投資・資産形成",
+q:"NISAについて相談できますか？",
+a:"はい。NISAの基本的な仕組みや制度の特徴、利用する際の注意点についてご相談いただけます。"
+},
+{
+c:"投資・資産形成",
+q:"iDeCoについて相談できますか？",
+a:"はい。iDeCoの仕組みや税制上の特徴、加入条件、注意点などについてご相談いただけます。"
+},
+{
+c:"住宅・教育",
+q:"住宅ローンについて相談できますか？",
+a:"はい。住宅ローンの返済計画や金利の仕組み、家計への影響などについてご相談いただけます。"
+},
+{
+c:"住宅・教育",
+q:"子どもの教育資金について相談できますか？",
+a:"はい。進学に必要な費用や教育資金の準備方法についてご相談いただけます。"
+},
+{
+c:"個人情報",
+q:"収入や預金額を伝える必要がありますか？",
+a:"具体的な資金計画を立てる場合には、収入や支出、貯蓄額などをお伺いすることがあります。必要な範囲でお知らせください。"
+},
+{
+c:"個人情報",
+q:"個人情報は守られますか？",
+a:"お客様の個人情報は、当事務所の個人情報保護方針に従って適切に取り扱います。詳しくは担当者にお問い合わせください。"
+},
+{
+c:"受付対応",
+q:"専門的な質問をされたらどうすればよいですか？",
+a:"申し訳ございません。詳しい内容につきましては、専門の担当者からご説明させていただきます。少々お待ちください。"
+},
+{
+c:"受付対応",
+q:"相談するかどうか迷っています。",
+a:"もちろん、まずはお話をお聞かせください。相談の進め方やサービス内容をご説明いたしますので、その後でご検討いただけます。"
+},
+{
+c:"受付対応",
+q:"何を相談すればよいかわかりません。",
+a:"ご安心ください。現在気になっていることや、将来のお金について心配されていることなど、簡単なお話から始めていただけます。"
+}
+];
+
+let selected = "すべて";
+let opened = -1;
+
+const categories = ["すべて",...new Set(data.map(x=>x.c))];
+
+function makeButton(text,cls,fn){
+  const b=document.createElement("button");
+  b.textContent=text;
+  b.className=cls;
+  b.onclick=fn;
+  return b;
+}
+
+function initCategories(){
+  const el=document.getElementById("categories");
+  el.innerHTML="";
+  categories.forEach(c=>{
+    const b=makeButton(c,
+      "category"+(selected===c?" active":""),
+      ()=>{
+        selected=c;
+        opened=-1;
+        initCategories();
+        render();
+      });
+    el.appendChild(b);
+  });
+}
+
+function render(){
+  const word=document.getElementById("search").value
+    .trim().toLowerCase();
+
+  const list=data.map((item,index)=>({...item,index}))
+    .filter(item=>{
+      const matchCategory=selected==="すべて"||item.c===selected;
+      const matchWord=(item.q+item.a+item.c)
+        .toLowerCase().includes(word);
+      return matchCategory&&matchWord;
+    });
+
+  const root=document.getElementById("questions");
+  root.innerHTML="";
+  document.getElementById("resultCount").textContent=
+    "該当する質問："+list.length+"件";
+
+  if(list.length===0){
+    root.textContent="該当する質問がありません。別のキーワードで検索してください。";
+    return;
+  }
+
+  list.forEach(item=>{
+    const wrap=document.createElement("div");
+    const q=makeButton("Q. "+item.q+"　⌄",
+      "question",()=>{
+        opened=opened===item.index?-1:item.index;
+        render();
+      });
+    wrap.appendChild(q);
+
+    if(opened===item.index){
+      const a=document.createElement("div");
+      a.className="answer show";
+
+      const h=document.createElement("h3");
+      h.textContent="回答";
+      const p=document.createElement("div");
+      p.className="answer-text";
+      p.textContent=item.a;
+
+      const actions=document.createElement("div");
+      actions.className="actions";
+
+      const speak=makeButton("🔊 回答を読み上げる","speak",()=>{
+        speechSynthesis.cancel();
+        const utterance=new SpeechSynthesisUtterance(item.a);
+        utterance.lang="ja-JP";
+        utterance.rate=0.95;
+        speechSynthesis.speak(utterance);
+      });
+
+      const stop=makeButton("■ 読み上げ停止","stop",()=>{
+        speechSynthesis.cancel();
+      });
+
+      const copy=makeButton("回答をコピー","copy",()=>{
+        if(navigator.clipboard && window.isSecureContext){
+          navigator.clipboard.writeText(item.a)
+            .then(()=>alert("回答をコピーしました。"))
+            .catch(()=>fallbackCopy(item.a));
+        }else{
+          fallbackCopy(item.a);
+        }
+      });
+
+      actions.append(speak,stop,copy);
+      a.append(h,p,actions);
+      wrap.appendChild(a);
+    }
+    root.appendChild(wrap);
+  });
+}
+
+function fallbackCopy(text){
+  const area=document.createElement("textarea");
+  area.value=text;
+  document.body.appendChild(area);
+  area.select();
+  try{
+    document.execCommand("copy");
+    alert("回答をコピーしました。");
+  }catch(e){
+    alert("コピーできませんでした。");
+  }
+  area.remove();
+}
+
+initCategories();
+render();
+</script>
+</body>
+</html>
